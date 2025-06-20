@@ -363,10 +363,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cubePrefab: {fileID: 1356493944643157984, guid: 88dc191d49cb5b64496bcf63a368416d,
     type: 3}
-  cubeLargeX: 10
-  cubeLargeY: 10
-  cubeLargeZ: 10
+  cubeLargeX: 2
+  cubeLargeY: 100
+  cubeLargeZ: 100
   distance: 1.1
+  spawnDelay: 0.000001
+  isFast: 0
 --- !u!4 &1130255807
 Transform:
   m_ObjectHideFlags: 0

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ColorPicker : MonoBehaviour
 {
-    [SerializeField] Color color;
+    public Color ColorTake;
 
     private ColorManager colorManager;
     private MeshRenderer meshRenderer;
@@ -16,10 +16,10 @@ public class ColorPicker : MonoBehaviour
 
         meshRenderer = GetComponent<MeshRenderer>();
         material = meshRenderer.material;
-        material.color = color;
+        material.color = ColorTake;
     }
-    private void OnMouseDown()
-    {
-        colorManager.ColorPick = color;
-    }
+    //private void OnMouseDown()
+    //{
+    //    colorManager.ColorPick = ColorTake;
+    //}
 }
