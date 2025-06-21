@@ -30,8 +30,6 @@ public class CameraCast : MonoBehaviour
 
                 SetColor setColor = hitInfo.collider.gameObject.GetComponent<SetColor>();
                 if (setColor != null) setColor.materialQuad.color = colorManager.ColorPick;
-
-                Debug.Log(hitInfo.collider.gameObject.name);
             }
         }
     }
