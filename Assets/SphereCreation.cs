@@ -7,22 +7,27 @@ using UnityEngine;
 public class SphereCreation : MonoBehaviour
 {
     [SerializeField] private Transform cubePrefab;
+    [SerializeField] private Transform target;
+    [SerializeField] private Transform parent;
     [SerializeField] private float radius;
-    [SerializeField] private int cubeNumber;
+    [SerializeField] private int numberCube;
 
-    [SerializeField] private float minRandom = 0.2f;
-    [SerializeField] private float maxRandom = 0.6f;
-    [SerializeField] private float velocity = 0.1f;
+    [SerializeField] private float minRandomScale = 0.2f;
+    [SerializeField] private float maxRandomScale = 0.6f;
+    [SerializeField] private float velocityExsplosion = 0.1f;
+    [SerializeField] private float timeWaite = 0.5f;
 
     [SerializeField] private bool isInside;
     [SerializeField] private bool isRandomScale;
     [SerializeField] private bool isRandomRotation;
     [SerializeField] private bool isRealTime = false;
+    [SerializeField] private bool isAnimate = false;
+    [SerializeField] private bool isFollow = false;
     [SerializeField] private bool isRegenerate = false;
     [SerializeField] private bool isExsplosion = false;
 
-    private float getRadius;
     private int getCubeNumber;
+    private float getRadius;
     private float getMinRandom;
     private float getMaxRandom;
 
@@ -31,87 +36,135 @@ public class SphereCreation : MonoBehaviour
     private bool getRandomRotation;
 
 
-    private List<Transform> cubePrefabs = new List<Transform>();
+    private List<Transform> cubePrefabList = new List<Transform>();
     private float randomScale;
 
     private void Start()
     {
-        Generate();
-
+        GenerationAllSphere();
         Equals();
     }
 
     private void Update()
     {
-        if (isRegenerate) Regenerate();
-
-        RealTime();
+        if (isRegenerate) GenerationAllSphere();
 
         Explosion();
+        RealTime();
+    }
+
+    private void GenerationAllSphere()
+    {
+        if (isAnimate) StartCoroutine(TimeCreatingSphere());
+        else CreatingSphere();
     }
 
     private void Explosion()
     {
         if(!isExsplosion) return;
 
-        radius += velocity;
-        cubeNumber -= 5;
+        radius += velocityExsplosion;
+        numberCube -= 5;
     }
 
     private void RealTime()
     {
         if (!isRealTime) return;
 
-        if(getRadius != radius || getCubeNumber != cubeNumber || getMinRandom != minRandom || getMaxRandom != maxRandom || getInside != isInside || getRandomScale != isRandomScale || getRandomRotation != isRandomRotation)
+        bool parametersChanged =
+            transform.position != target.position ||
+            getRadius          != radius          ||
+            getCubeNumber      != numberCube      ||
+            getMinRandom       != minRandomScale  ||
+            getMaxRandom       != maxRandomScale  ||
+            getInside          != isInside        ||
+            getRandomScale     != isRandomScale   ||
+            getRandomRotation  != isRandomRotation;
+
+        if(parametersChanged)
         {
             Equals();
 
-            Regenerate();
+            if (isAnimate) StartCoroutine(TimeCreatingSphere());
+            else CreatingSphere();
         }
     }
 
-    private void Regenerate()
+    IEnumerator TimeCreatingSphere()
     {
         isRegenerate = false;
-        for (int i = 0; i < cubePrefabs.Count; i++) Destroy(cubePrefabs[i].gameObject);
 
-        cubePrefabs.Clear();
-        Generate();
-    }
-
-    private void Generate()
-    {
-        if (isInside) CreateSphereInside();
-        else CreateSphereOut();
-
-        Debug.Log(cubePrefabs.Count);
-    }
-    private void CreateSphereInside()
-    {
-        for (int i = 0; i < cubeNumber; i++)
+        for (int i = 0; i < numberCube; i++)
         {
-            randomScale = (Random.Range(minRandom, maxRandom));
+            if (!isRealTime) yield break;
 
-            Transform cube = Instantiate(cubePrefab, transform);
-            cube.position = Random.insideUnitSphere * radius;
-            cubePrefabs.Add(cube);
-
-            RandomValue(cube);
+            GenerateSpheres(i);
+            yield return new WaitForSeconds(timeWaite);
         }
+
+        for (int i = numberCube; i < cubePrefabList.Count; i++)
+        {
+            if (!isRealTime) yield break;
+
+            cubePrefabList[i].gameObject.SetActive(false);
+            yield return new WaitForSeconds(timeWaite);
+        }
+
+        Debug.Log("Active Cubes " + numberCube + " Total Cubes " + cubePrefabList.Count);
     }
 
-    private void CreateSphereOut()
+    private void CreatingSphere()
     {
-        for (int i = 0; i < cubeNumber; i++)
+        isRegenerate = false;
+        randomScale = Random.Range(minRandomScale, maxRandomScale);
+
+        for (int i = 0; i < numberCube; i++)
         {
-            randomScale = (Random.Range(minRandom, maxRandom));
-
-            Transform cube = Instantiate(cubePrefab, transform);
-            cube.position = Random.onUnitSphere * radius;
-            cubePrefabs.Add(cube);
-
-            RandomValue(cube);
+            GenerateSpheres(i);
         }
+
+        for (int i = numberCube; i < cubePrefabList.Count; i++)
+        {
+            cubePrefabList[i].gameObject.SetActive(false);
+        }
+
+        Debug.Log("Active Cubes " + numberCube + " Total Cubes " + cubePrefabList.Count);
+    }
+
+    private void GenerateSpheres(int i)
+    {
+        randomScale = Random.Range(minRandomScale, maxRandomScale);
+        Transform cube = GenerateCubes(i);
+
+        if (isFollow)
+        {
+            Vector3 mode = isInside ? Random.insideUnitSphere : Random.onUnitSphere;
+            cube.position = target.position + mode * radius;
+        }
+        else
+        {
+            Vector3 mode = isInside ? Random.insideUnitSphere : Random.onUnitSphere;
+            cube.position = mode * radius;
+        }
+        RandomValue(cube);
+    }
+
+    private Transform GenerateCubes(int i)
+    {
+        Transform cube;
+        if (i < cubePrefabList.Count)
+        {
+            cube = cubePrefabList[i];
+            cube.gameObject.SetActive(true);
+        }
+        else
+        {
+            cube = Instantiate(cubePrefab);
+            cube.SetParent(parent);
+            cubePrefabList.Add(cube);
+        }
+
+        return cube;
     }
 
     private void RandomValue(Transform cube)
@@ -122,10 +175,12 @@ public class SphereCreation : MonoBehaviour
 
     private void Equals()
     {
+        transform.position = target.position;
+
         getRadius = radius;
-        getCubeNumber = cubeNumber;
-        getMinRandom = minRandom;
-        getMaxRandom = maxRandom;
+        getCubeNumber = numberCube;
+        getMinRandom = minRandomScale;
+        getMaxRandom = maxRandomScale;
 
         getInside = isInside;
         getRandomScale = isRandomScale;
